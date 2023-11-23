@@ -1,0 +1,13 @@
+pandas
+scikit-learn==1.2.2
+matplotlib
+seaborn
+jupyter
+xgboost
+plotly
+shap
+eli5
+imblearn
+sklearn-genetic
+numpy==1.23.5
+lime
