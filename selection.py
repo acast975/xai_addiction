@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.feature_selection import SelectKBest, f_regression
+from sklearn.feature_selection import SelectKBest, f_classif, chi2
 from sklearn.metrics import classification_report
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -9,11 +9,11 @@ from sklearn.linear_model import LassoCV, ElasticNetCV
 
 def select_k_best_features(x_data, y_data, k=0):
     
-    best_features = SelectKBest(score_func = f_regression, k=k if k > 0 else 'all')
+    best_features = SelectKBest(score_func = f_classif, k=k if k > 0 else 'all')
     calc_features = best_features.fit(x_data,y_data)
     #odabir najboljih feature-a
-    usefull_features = pd.DataFrame({'feature' : x_data.columns.values, 'score' : calc_features.scores_})
-    most_usefull_features = usefull_features.sort_values(by=['score'],ascending=False)
+    usefull_features = pd.DataFrame({'attr_names' : x_data.columns.values, 'values' : calc_features.scores_})
+    most_usefull_features = usefull_features.sort_values(by=['values'],ascending=False)
     if k > 0:
         most_usefull_features = most_usefull_features.head(k)
 

@@ -111,7 +111,7 @@ def process_standardization(data):
     to_process = data.columns.difference(no_process)
     
     # robust scaling
-    standard_scaler = MinMaxScaler()
+    standard_scaler = StandardScaler()
     new_data = data.copy()
     new_data[to_process] = standard_scaler.fit_transform(new_data[to_process])
                                                              
