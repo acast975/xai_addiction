@@ -4,6 +4,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier, BaggingClassifier
 from xgboost import XGBClassifier
+from eli5 import explain_prediction_dfs
 
 def get_predictions(classifier_name, x_train, y_train, x_test, y_test):
     
@@ -74,5 +75,39 @@ def add_top_features_count(name, df_top_features_count, df_top, n=0):
     df_ret.top_count = df_top_features_count.top_count.add(df_top_features_count.attr_names.isin(top.attr_names).astype(int))
     if name == 'SHAP' or name == 'eli5' or name=='tree_importance':
         df_ret.top_count_xai = df_top_features_count.top_count_xai.add(df_top_features_count.attr_names.isin(top.attr_names).astype(int))
+    else:
+        df_ret.top_count_selection = df_top_features_count.top_count_selection.add(df_top_features_count.attr_names.isin(top.attr_names).astype(int))
+
     return df_ret
+
+def add_top_features_interpretation_score(df_top, df_interpretation):
+    df_temp = df_interpretation[df_interpretation.values>0]
+    df_top.score = df_top.score.add(df_top.attr_names.isin(df_temp).astype(int))
+    return df_top
+
+def get_important_features_statistics(predictions, x_test, top_n_features):
+    
+    for pred_type in ['tp', 'tn', 'fp', 'fn']:
+        df_top_n_features = pd.DataFrame({'attr_names' : top_n_features})
+        df_top_n_features['score'] = 0
+        n_features = list()
+
+        for i in predictions[pred_type][0]:
+            df = explain_prediction_dfs(
+                predictions['model'],
+                x_test.iloc[i,:],
+                targets=[0, 1], 
+                target_names=['PIU no', 'PIU yes'],
+                feature_names=x_test.columns.values.tolist(),
+                top=len(x_test.columns)+1
+            )
+            df_interpretation = pd.DataFrame({'attr_names' : df['targets'].iloc[:, 1], 'values' : df['targets'].iloc[:, 2]})
+            df_interpretation = df_interpretation[df_interpretation['values']>0].iloc[:11]
+            n_features.append(len(df_interpretation[df_interpretation.attr_names.isin(df_top_n_features.attr_names)]))
+            df_top_n_features.score = df_top_n_features.score.add(df_top_n_features.attr_names.isin(df_interpretation.attr_names).astype(int))
+
+        df_top_n_features = df_top_n_features.sort_values(by=['score'], ascending=False)
+        print(df_top_n_features)
+        print('Number of {0} instances {1:.2f}. Mean number of relevant features per classification result {2:.2f}.'.format(pred_type, len(n_features), np.mean(np.array(n_features))))
+
     
